@@ -41,11 +41,11 @@ func TestUpdate(t *testing.T) {
 		t.Errorf("updatedAt should be updated if something changed")
 	}
 
-	if !DB.First(&Product{}, "code = 'product1code'").RecordNotFound() {
+	if !DB.First(&Product{}, "code = ?", "product1code").RecordNotFound() {
 		t.Errorf("Product1's code should be updated")
 	}
 
-	if DB.First(&Product{}, "code = 'product1newcode'").RecordNotFound() {
+	if DB.First(&Product{}, "code = ?", "product1newcode").RecordNotFound() {
 		t.Errorf("Product should not be changed to 789")
 	}
 
@@ -139,7 +139,7 @@ func TestUpdates(t *testing.T) {
 	}
 
 	DB.Table("products").Where("code in (?)", []string{"product2code"}).Updates(Product{Code: "product2newcode"})
-	if !DB.First(&Product{}, "code = 'product2code'").RecordNotFound() {
+	if !DB.First(&Product{}, "code = ?", "product2code").RecordNotFound() {
 		t.Errorf("Product2's code should be updated")
 	}
 

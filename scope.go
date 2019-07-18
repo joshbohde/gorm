@@ -277,23 +277,6 @@ func (scope *Scope) AddToVars(value interface{}) string {
 	return scope.Dialect().BindVar(len(scope.SQLVars))
 }
 
-// IsCompleteParentheses check if the string has complete parentheses to prevent SQL injection
-func (scope *Scope) IsCompleteParentheses(value string) bool {
-	count := 0
-	for i, _ := range value {
-		if value[i] == 40 { // (
-			count++
-		} else if value[i] == 41 { // )
-			count--
-		}
-		if count < 0 {
-			break
-		}
-		i++
-	}
-	return count == 0
-}
-
 // SelectAttrs return selected attributes
 func (scope *Scope) SelectAttrs() []string {
 	if scope.selectAttrs == nil {
@@ -573,10 +556,6 @@ func (scope *Scope) buildCondition(clause map[string]interface{}, include bool) 
 		}
 
 		if value != "" {
-			if !scope.IsCompleteParentheses(value) {
-				scope.Err(fmt.Errorf("incomplete parentheses found: %v", value))
-				return
-			}
 			if !include {
 				if comparisonRegexp.MatchString(value) {
 					str = fmt.Sprintf("NOT (%v)", value)
@@ -869,6 +848,13 @@ func (scope *Scope) prepareQuerySQL() {
 }
 
 func (scope *Scope) inlineCondition(values ...interface{}) *Scope {
+	if len(values) == 1 {
+		if _, ok := values[0].(string); ok {
+			scope.Search.Where(fmt.Sprintf("%v.%v = %v", scope.QuotedTableName(), scope.Quote(scope.PrimaryKey()), scope.AddToVars(values[0])))
+			return scope
+		}
+	}
+
 	if len(values) > 0 {
 		scope.Search.Where(values[0], values[1:]...)
 	}
